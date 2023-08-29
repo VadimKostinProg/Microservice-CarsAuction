@@ -11,6 +11,7 @@ builder.Services.AddDbContext<AuctionDbContext>(options =>
 {
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"));
 });
+builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
 var app = builder.Build();
 
@@ -24,6 +25,6 @@ try
 {
     app.InitDatabase();
 }
-catch(Exception) { }
+catch(Exception) {  }
 
 app.Run();
