@@ -20,4 +20,10 @@ app.UseAuthorization();
 
 app.MapControllers();
 
+try
+{
+    app.InitDatabase();
+}
+catch(Exception) { }
+
 app.Run();
