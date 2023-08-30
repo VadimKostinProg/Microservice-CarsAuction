@@ -1,6 +1,7 @@
 ﻿using MongoDB.Driver;
 using MongoDB.Entities;
 using SearchService.Models;
+using SearchService.ServiceContracts;
 using System.Text.Json;
 
 namespace SearchService.Data
@@ -9,6 +10,10 @@ namespace SearchService.Data
     {
         public static async Task InitDB(this WebApplication app)
         {
+            using var scope = app.Services.CreateScope();
+
+            var logger = scope.ServiceProvider.GetRequiredService<ILogger<WebApplication>>();
+
             await DB.InitAsync("SearchDB", MongoClientSettings
                 .FromConnectionString(app.Configuration.GetConnectionString("MongoDBConnection")));
 
@@ -21,19 +26,39 @@ namespace SearchService.Data
             // Seed data
             var count = await DB.CountAsync<Item>();
 
-            if (count > 0)
-                return;
-
-            var itemsData = await File.ReadAllTextAsync("Data/auctions.json");
-
-            var options = new JsonSerializerOptions()
+            if (count == 0)
             {
-                PropertyNameCaseInsensitive = true,
-            };
+                var itemsData = await File.ReadAllTextAsync("Data/auctions.json");
 
-            var items = JsonSerializer.Deserialize<List<Item>>(itemsData, options);
+                var options = new JsonSerializerOptions()
+                {
+                    PropertyNameCaseInsensitive = true,
+                };
 
-            await DB.SaveAsync(items);
+                var items = JsonSerializer.Deserialize<List<Item>>(itemsData, options);
+
+                await DB.SaveAsync(items);
+
+                logger.LogInformation("Data base has been initialized successfully.");
+            }
+
+            // Adding last updated items
+            var lastUpdatedDate = await DB.Find<Item, string>()
+                .Sort(x => x.Descending(x => x.UpdatedAt))
+                .Project(x => x.UpdatedAt.ToString())
+                .ExecuteFirstAsync();
+
+            var auctionService = scope.ServiceProvider.GetRequiredService<IAuctionsService>();
+
+            var newItems = await auctionService.GetAuctions(lastUpdatedDate);
+
+            if (newItems.Any())
+            {
+                int newItemsCount = newItems.Count();
+                logger.LogInformation($"New {newItemsCount} items has been inserted to the data base successfully.");
+
+                await DB.SaveAsync(newItems);
+            }
         }
     }
 }
