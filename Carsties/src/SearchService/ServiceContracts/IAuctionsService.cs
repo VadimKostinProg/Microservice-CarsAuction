@@ -1,17 +1,37 @@
-﻿using SearchService.Models;
+﻿using Contracts;
+using SearchService.Models;
+using SearchService.RequestHelpers;
 
 namespace SearchService.ServiceContracts
 {
     /// <summary>
-    /// Service for sync communication between Search and Auction services.
+    /// Service for managing auctions.
     /// </summary>
     public interface IAuctionsService
     {
         /// <summary>
-        /// Methof for reading all auctions updated after the passed date.
+        /// Method for the searching items due to the passed search conditions.
         /// </summary>
-        /// <param name="date">Start date of updating of the auctions.</param>
-        /// <returns>Auctions items filtered by updating date.</returns>
-        Task<List<Item>> GetAuctions(string date);
+        /// <param name="searchParams">Object with search parametrs.</param>
+        /// <returns>Object with result collection, page count and total count of elements.</returns>
+        Task<SearchResponse> SearchItemsAsync(SearchParams searchParams);
+
+        /// <summary>
+        /// Method for adding new item to the data base.
+        /// </summary>
+        /// <param name="item">Item to add.</param>
+        Task AddNewItemAsync(AuctionCreated item);
+
+        /// <summary>
+        /// Method fot updating item in the data base.
+        /// </summary>
+        /// <param name="item">Item to update.</param>
+        Task UpdateItemAsync(AuctionUpdated item);
+
+        /// <summary>
+        /// Method for deleting item from the data base.
+        /// </summary>
+        /// <param name="id">Id of item to delete.</param>
+        Task DeleteItemAsync(string id);
     }
 }

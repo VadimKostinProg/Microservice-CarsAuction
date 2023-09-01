@@ -14,19 +14,12 @@ namespace SearchService.Data
 
             var logger = scope.ServiceProvider.GetRequiredService<ILogger<WebApplication>>();
 
-            await DB.InitAsync("SearchDB", MongoClientSettings
-                .FromConnectionString(app.Configuration.GetConnectionString("MongoDBConnection")));
-
-            await DB.Index<Item>()
-                .Key(x => x.Make, KeyType.Text)
-                .Key(x => x.Model, KeyType.Text)
-                .Key(x => x.Color, KeyType.Text)
-                .CreateAsync();
+            var context = scope.ServiceProvider.GetRequiredService<AuctionsContext>();
 
             // Seed data
-            var count = await DB.CountAsync<Item>();
+            var isDataBaseFilled = context.Items.Find(x => true).Any();
 
-            if (count == 0)
+            if (!isDataBaseFilled)
             {
                 var itemsData = await File.ReadAllTextAsync("Data/auctions.json");
 
@@ -37,27 +30,37 @@ namespace SearchService.Data
 
                 var items = JsonSerializer.Deserialize<List<Item>>(itemsData, options);
 
-                await DB.SaveAsync(items);
+                await context.Items.InsertManyAsync(items);
 
                 logger.LogInformation("Data base has been initialized successfully.");
             }
 
             // Adding last updated items
-            var lastUpdatedDate = await DB.Find<Item, string>()
-                .Sort(x => x.Descending(x => x.UpdatedAt))
-                .Project(x => x.UpdatedAt.ToString())
-                .ExecuteFirstAsync();
+            var lastUpdatedDate = context.Items.Find(x => true)
+                .ToList()
+                .Max(x => x.UpdatedAt)
+                .ToString();
 
-            var auctionService = scope.ServiceProvider.GetRequiredService<IAuctionsService>();
+            var syncCommunicationService = scope.ServiceProvider.GetRequiredService<ISyncServiceCommunicator>();
 
-            var newItems = await auctionService.GetAuctions(lastUpdatedDate);
+            var newItems = await syncCommunicationService.GetNewestAuctionsAsync(lastUpdatedDate);
 
             if (newItems.Any())
             {
                 int newItemsCount = newItems.Count();
                 logger.LogInformation($"New {newItemsCount} items has been inserted to the data base successfully.");
 
-                await DB.SaveAsync(newItems);
+                foreach(var item in newItems)
+                {
+                    if(context.Items.Find(x => x.Id == item.Id).Any())
+                    {
+                        await context.Items.ReplaceOneAsync(Builders<Item>.Filter.Eq(x => x.Id, item.Id), item);
+                    }
+                    else
+                    {
+                        await context.Items.InsertOneAsync(item);
+                    }
+                }
             }
         }
     }
