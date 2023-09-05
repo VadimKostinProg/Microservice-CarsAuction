@@ -5,6 +5,7 @@ using AutoMapper;
 using AutoMapper.QueryableExtensions;
 using Contracts;
 using MassTransit;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -56,12 +57,13 @@ namespace AuctionService.Controllers
             return Ok(_mapper.Map<AuctionResponse>(auction));
         }
 
+        [Authorize]
         [HttpPost]
         public async Task<ActionResult<AuctionResponse>> AddAuction([FromBody] AuctionAddRequest request)
         {
             var auction = _mapper.Map<Auction>(request);
 
-            auction.Seller = "text seller";
+            auction.Seller = User.Identity.Name;
 
             _context.Auctions.Add(auction);
 
@@ -74,10 +76,11 @@ namespace AuctionService.Controllers
             if (!result)
                 return BadRequest("Cannot save changes to the Database.");
 
-            return CreatedAtAction(nameof(GetAuctionById), 
+            return CreatedAtAction(nameof(GetAuctionById),
                 new { auction.Id }, newAuction);
         }
 
+        [Authorize]
         [HttpPut("{id}")]
         public async Task<ActionResult> UpdateAuction([FromRoute] Guid id, [FromBody] AuctionUpdateRequest request)
         {
@@ -85,9 +88,11 @@ namespace AuctionService.Controllers
                 .Include(x => x.Item)
                 .FirstOrDefaultAsync(x => x.Id == id);
 
-            if(auction is null) return NotFound();
+            if (auction is null) return NotFound();
 
-            //TODO: check seller == username
+            // If user has not created auction, he cannot update it
+            if (auction.Seller != User.Identity.Name)
+                return Forbid();
 
             auction.Item.Make = request.Make ?? auction.Item.Make;
             auction.Item.Model = request.Model ?? auction.Item.Model;
@@ -104,14 +109,17 @@ namespace AuctionService.Controllers
             return Ok();
         }
 
+        [Authorize]
         [HttpDelete("{id}")]
         public async Task<ActionResult> DeleteAuction([FromRoute] Guid id)
         {
             var auction = await _context.Auctions.FindAsync(id);
 
-            if(auction is null) return NotFound();
+            if (auction is null) return NotFound();
 
-            // TODO: check seller == username
+            // If user has not created auction, he cannot delete it
+            if (auction.Seller != User.Identity.Name)
+                return Forbid();
 
             var auctionDeleted = new AuctionDeleted() { Id = auction.Id.ToString() };
 

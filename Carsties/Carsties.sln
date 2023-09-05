@@ -11,9 +11,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SearchService", "src\Search
 EndProject
 Project("{E53339B2-1760-4266-BCC7-CA923CBCF16C}") = "docker-compose", "docker-compose.dcproj", "{0E6DD9DA-72E2-442D-84B2-FECCFDBC3A54}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Contracts", "..\src\Contracts\Contracts.csproj", "{1896ECB1-59ED-4C8E-9C97-EE8117226ED2}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Contracts", "..\src\Contracts\Contracts.csproj", "{1896ECB1-59ED-4C8E-9C97-EE8117226ED2}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IdentityService", "src\IdentityService\IdentityService.csproj", "{2D5F2A70-8D20-448E-BB6D-0ADCC0FE0672}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "IdentityService", "src\IdentityService\IdentityService.csproj", "{2D5F2A70-8D20-448E-BB6D-0ADCC0FE0672}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
