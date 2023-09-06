@@ -33,6 +33,35 @@ namespace SearchService.Services
             await _context.Items.DeleteOneAsync(filter);
         }
 
+        public async Task FinishItemAsync(AuctionFinished item)
+        {
+            var auction = await _context.Items.Find(x => x.Id == item.AuctionId).FirstOrDefaultAsync();
+
+            if (item.ItemSold)
+            {
+                auction.Winner = item.Winner;
+                auction.SoldAmount = item.Amount;
+            }
+
+            auction.Status = "Finished";
+
+            var filter = Builders<Item>.Filter.Eq(x => x.Id, auction.Id);
+            await _context.Items.ReplaceOneAsync(filter, auction);
+        }
+
+        public async Task PlaceBidAsync(BidPlaced bid)
+        {
+            var item = await _context.Items.Find(x => x.Id == bid.AuctionId).FirstOrDefaultAsync();
+
+            if (bid.BidStatus.Contains("Accepted") && bid.Amount > item.CurrentHighBid)
+            {
+                item.CurrentHighBid = bid.Amount;
+
+                var filter = Builders<Item>.Filter.Eq(x => x.Id, item.Id);
+                await _context.Items.ReplaceOneAsync(filter, item);
+            }
+        }
+
         public async Task<SearchResponse> SearchItemsAsync(SearchParams searchParams)
         {
             List<Item> query;
@@ -93,7 +122,7 @@ namespace SearchService.Services
         {
             var item = _context.Items.Find(x => x.Id == auction.Id).FirstOrDefault();
 
-            if(item is null)
+            if (item is null)
                 throw new KeyNotFoundException("Item with such Id is not found.");
 
             item.Make = auction.Make;

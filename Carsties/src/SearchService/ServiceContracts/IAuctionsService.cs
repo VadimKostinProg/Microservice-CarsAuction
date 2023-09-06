@@ -29,6 +29,18 @@ namespace SearchService.ServiceContracts
         Task UpdateItemAsync(AuctionUpdated item);
 
         /// <summary>
+        /// Method for handling placed bid.
+        /// </summary>
+        /// <param name="bid">Placed bid to handle.</param>
+        Task PlaceBidAsync(BidPlaced bid);
+
+        /// <summary>
+        /// Method for handling finished auction.
+        /// </summary>
+        /// <param name="item">Finished auction to handle.</param>
+        Task FinishItemAsync(AuctionFinished item);
+
+        /// <summary>
         /// Method for deleting item from the data base.
         /// </summary>
         /// <param name="id">Id of item to delete.</param>
