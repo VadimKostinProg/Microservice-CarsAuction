@@ -1,7 +1,9 @@
 import React from 'react'
 import AuctionCard from './AuctionCard';
+import { PagedResult } from '@/types';
+import { Auction } from './Auction';
 
-async function getDataAsync() {
+async function getDataAsync(): Promise<PagedResult<Auction>> {
     const res = await fetch('http://localhost:6001/search?pageSize=10');
 
     if(!res.ok) throw new Error('Failed to fetch data');
