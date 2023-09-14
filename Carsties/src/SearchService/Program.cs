@@ -1,6 +1,4 @@
 using MassTransit;
-using MongoDB.Driver;
-using MongoDB.Entities;
 using Polly;
 using Polly.Extensions.Http;
 using SearchService.Consumers;
@@ -16,7 +14,7 @@ builder.Services.AddControllers();
 
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
-builder.Services.AddHttpClient<ISyncServiceCommunicator>().AddPolicyHandler(GetPolicy());
+builder.Services.AddHttpClient<SyncServiceCommunicator>().AddPolicyHandler(GetPolicy());
 
 builder.Services.AddScoped<AuctionsContext>();
 builder.Services.AddScoped<ISyncServiceCommunicator, SyncServiceCommunicator>();
@@ -87,5 +85,5 @@ app.Run();
 
 static IAsyncPolicy<HttpResponseMessage> GetPolicy() =>
     HttpPolicyExtensions.HandleTransientHttpError()
-                        .OrResult(msg => msg.StatusCode == System.Net.HttpStatusCode.NotFound)
+                        .OrResult(msg => msg.StatusCode != System.Net.HttpStatusCode.OK)
                         .WaitAndRetryForeverAsync(_ => TimeSpan.FromSeconds(3));
