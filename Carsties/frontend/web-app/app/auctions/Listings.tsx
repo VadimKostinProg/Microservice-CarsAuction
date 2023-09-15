@@ -1,27 +1,50 @@
-import React from 'react'
+'use client'
+
+import React, { useEffect, useState } from 'react'
 import AuctionCard from './AuctionCard';
-import { PagedResult } from '@/types';
+
+import AppPagination from '../components/AppPagination';
+import { getDataAsync } from '../actions/auctionAction';
 import { Auction } from './Auction';
+import Filters from './Filters';
+import { PagedResult } from '@/types';
+import { useParamsStore } from '@/hooks/useParamsStore';
+import { shallow } from 'zustand/shallow'
+import qs from 'query-string'
 
-async function getDataAsync(): Promise<PagedResult<Auction>> {
-    const res = await fetch('http://localhost:6001/search?pageSize=10');
+export default function Listings() {
+    const [data, setData] = useState<PagedResult<Auction>>();
+    const params = useParamsStore(state => ({
+      pageNumber: state.pageNumber,
+      pageSize: state.pageSize,
+      searchTerm: state.searchTerm
+    }), shallow)
+    const setParams = useParamsStore(state => state.setParams)
+    const url = qs.stringifyUrl({url: '', query: params})
+    
+    function setPageNumber(pageNumber: number) {
+      setParams({pageNumber})
+    }
 
-    if(!res.ok) throw new Error('Failed to fetch data');
+    useEffect(() => {
+      getDataAsync(url).then(data => {
+        setData(data);
+      })
+    }, [url])
 
-    return res.json();
-}
-
-export default async function Listings() {
-    const data = await getDataAsync();
+    if (!data) return <h3>Loading...</h3>
 
     return (
-        // <div>
-        //     {JSON.stringify(data)}
-        // </div>
-      <div className='grid grid-cols-4 gap-6'>
-        {data && data.results.map((auction: any) => (
-            <AuctionCard auction={auction} key={auction.id} />
-        ))}
-      </div>
+      <>
+        <Filters />
+        <div className='grid grid-cols-4 gap-6'>
+          {data.results.map((auction: any) => (
+              <AuctionCard auction={auction} key={auction.id} />
+          ))}
+        </div>
+        <div className='flex justify-center'>
+          <AppPagination currentPage={params.pageNumber} pageCount={data.pageCount} pageChanged={setPageNumber} />
+        </div>
+      </>
     )
 }

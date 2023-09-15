@@ -76,8 +76,6 @@ namespace SearchService.Services
                 query = await _context.Items.Find(filter).ToListAsync();
             }
 
-            int totalCount = query.Count;
-
             query = searchParams.OrderBy switch
             {
                 "make" => query.OrderBy(x => x.Make).ToList(),
@@ -103,12 +101,16 @@ namespace SearchService.Services
                 query = query.Where(x => x.Winner == searchParams.Winner).ToList();
             }
 
+            int totalCount = query.Count;
+
             int skip = (searchParams.PageNumber - 1) * searchParams.PageSize;
             var result = query.Skip(skip)
                 .Take(searchParams.PageSize)
                 .ToList();
 
-            int pageCount = result.Count;
+            int pageCount = (int)Math.Ceiling((double)totalCount / searchParams.PageSize);
+
+            
 
             return new SearchResponse()
             {
