@@ -78,7 +78,9 @@ namespace SearchService.Services
 
             query = searchParams.OrderBy switch
             {
-                "make" => query.OrderBy(x => x.Make).ToList(),
+                "make" => query.OrderBy(x => x.Make)
+                               .ThenBy(x => x.Model)
+                               .ToList(),
                 "new" => query.OrderByDescending(x => x.CreatedAt).ToList(),
                 _ => query.OrderBy(x => x.AuctionEnd).ToList()
             };
@@ -109,8 +111,6 @@ namespace SearchService.Services
                 .ToList();
 
             int pageCount = (int)Math.Ceiling((double)totalCount / searchParams.PageSize);
-
-            
 
             return new SearchResponse()
             {
