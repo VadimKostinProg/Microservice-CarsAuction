@@ -39,8 +39,7 @@ public static class Config
                 AllowedGrantTypes = GrantTypes.ResourceOwnerPassword,
                 RequirePkce = false,
                 AllowOfflineAccess = true,
-                AccessTokenLifetime = 3600 * 24 * 30,
-                AlwaysIncludeUserClaimsInIdToken = true
+                AccessTokenLifetime = 3600 * 24 * 30
             }
         };
 }
